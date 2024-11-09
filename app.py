@@ -26,35 +26,14 @@ def prever():
     dados = request.get_json()
     
     # Vamos extrair e formatar os dados para predição
-    dados_entrada = [dados['input']]
-    predicao = modelo.predict(dados_entrada)
+    try:
+        dados_entrada = [dados['input']]
+    except KeyError:
+        return jsonify({"erro": "Chave de dados incorreta. Envie os dados em formato json com a chave 'input' "}), 400
+    
+    try:
+        predicao = modelo.predict(dados_entrada)
+    except ValueError as e:
+        return jsonify({"erro": "Dados enviados incorretos. Verifique o formato e a quantidade de dados enviados"}), 400
     return jsonify({'predicao': int(predicao[0])})
 
-@app.route('/upload', methods=['POST'])
-def upload_image():
-    # Verifica se os dados em Base64 foram incluídos na requisição
-    data = request.json
-    # print(data)
-    
-    if not data or 'imagem' not in data:
-        return jsonify({"error": "Dados incompletos: 'imagem' é obrigatório"})
-    
-    # Extrai a imagem em Base64
-    file_base64 = data['imagem']
-    print(file_base64)
-    
-    # Ajusta o padding da string Base64, se necessário
-    missing_padding = len(file_base64) % 4
-    if missing_padding != 0:
-        file_base64 += '=' * (4 - missing_padding)
-    # Define o nome do arquivo (pode usar um padrão ou gerar automaticamente)
-    filename = "imagem_recebida.jpg"  # ou use uma função para gerar nomes únicos
-    
-    # Converte de Base64 para bytes
-    try:
-        file_data = base64.b64decode(file_base64)
-    except (base64.binascii.Error, ValueError) as e:
-        print(e)
-        return jsonify({"error": "Base64 inválido"})
-    
-    return jsonify({"filename": filename})
